@@ -1,22 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>d2llabs-newsFeed</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <title>Announcements Feed View</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 
-    <script src="d2llabs-newsFeed.js"></script>
+  <style>
+     #d2llabs-newsFeed {
+      padding-left: 10px;
+      padding-right: 10px;
+      width: 100%;
+      list-style: none;
+    }
 
-    <link href="d2llabs-newsFeed.css" rel="stylesheet" type="text/css">
+    .postedDate {
+      font-size: 14px;
+      line-height: 20px; 
+      font-weight: 400; /* normal */
+      letter-spacing: 0.2px;
+      color: #72777A; /* Tungsten */
+    }
+
+    .newsObject {
+      padding-bottom: 20px;
+    }
+
+    .bottomBorder {
+      border-bottom: 1px solid #72777A;
+    }
+
+    .withPicture {
+      margin-left:90px;
+    }
+
+    .project-pic {
+      width:80px;
+      float:left!important
+    }
+  </style>
 
 </head>
 <body>
@@ -24,5 +58,115 @@
 <ul id="d2llabs-newsFeed">
 </ul>
 
+<script>
+
+const orgUnitId = getQueryStringParams('ou');
+const announcementLimit = getQueryStringParams('limit') || 5;
+
+const newsApi = `/d2l/api/le/1.25/${orgUnitId}/news/`;
+
+function extractFirstImage(html) {
+  const htmlObject = document.createElement('div');
+  htmlObject.innerHTML = html;
+  const images = htmlObject.getElementsByTagName("img");
+  if (images.length === 0 || !images) {
+    return false;
+  }
+  const firstImage = images[0].src;
+  return firstImage;
+}
+
+function getQueryStringParams(sParam) {
+  const sPageURL = window.location.search.substring(1);
+  const sURLVariables = sPageURL.split('&');
+  for (let i = 0; i < sURLVariables.length; i++) {
+    const sParameterName = sURLVariables[i].split('=');
+    if (sParameterName[0] == sParam) {
+      return sParameterName[1];
+    }
+  }
+}
+
+function resizeParentIframe() {
+  if( window.parent && window.parent.document ) {
+    const iframes = parent.document.getElementsByTagName('iframe');
+    for( let i=0; i<iframes.length; i++ ) {
+        if( iframes[i].contentWindow === window ) {
+            iframes[i].style.height = document.body.scrollHeight + 'px';
+        }
+    }
+  }
+}
+
+function makeApiCall(method, api, apiSuccess, apiError) {
+  $.ajax(api, {
+    method: method,
+    xhrFields: {withCredentials: true},
+    success: apiSuccess,
+    error: apiError
+  });
+}
+
+function apiError(err) {
+  console.log(err);
+}
+
+function apiSuccess(res) {
+
+  let obj, newsId, title, displayTitle, url, newsDate, displayDate, htmlBody, firstImgSrc, imgHtml, divClass, borderClass, announcement;
+  let lastIndexToShow = announcementLimit-1;
+  if( res.length < (lastIndexToShow+1) ) {
+    lastIndexToShow = res.length - 1;
+  }
+
+  borderClass = "bottomBorder";
+
+  for (let i=0; i<res.length; i++) {
+    obj = res[i];
+
+    if( i > lastIndexToShow ) { 
+        break; 
+    } else if( i === lastIndexToShow ) {
+        borderClass = "";
+    }
+
+    newsId = obj.Id;
+    title = obj.Title;
+    newsDate = new Date(obj.StartDate);
+    htmlBody = obj.Body.Html;
+
+    url = `/d2l/le/news/${orgUnitId}/${newsId}/view`;
+    displayTitle = `<a href="${url}" target="_top">${title}</a>`;
+    displayDate = moment(newsDate).fromNow();
+
+    firstImgSrc = extractFirstImage( htmlBody );
+    if( firstImgSrc ) {
+        imgHtml = `<span><img src="${firstImageSource}"  class="project-pic img-thumbnail"></span>`;
+        divClass = 'withPicture';
+    } else {
+        imgHtml = '';
+        divClass = '';
+    }
+
+    announcement = `
+      <li class="newsObject ${borderClass}">
+        ${imgHtml}
+        <div class="${divClass}">
+          <h3>${displayTitle}</h3>
+          <p class="postedDate">Posted: ${displayDate}</p>
+        </div>
+      </li>
+    `;
+
+    $('#d2llabs-newsFeed').append(announcement);
+  }
+
+  resizeParentIframe();
+}
+
+//start the whole thing going
+makeApiCall('GET', newsApi, apiSuccess, apiError);
+
+</script>
 </body>
 </html>
