@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Carousel View of Topics</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+  <style>
+    div.item {
+      height:240px;
+      width:100%;
+      font-color:white;
+      padding-top:20px;
+    }
+    div.item h2 p { font-color:white; }
+    
+    .orange { background-color:#A6540D; }
+    .green { background-color:#275C36; }
+    .purple { background-color:#4C3F99; }
+    .blue { background-color:#005694; }
+
+    .font-white { font-color:white; }
+
+    .pane {
+      width:75%;
+      padding-left:10px;
+      padding-right:10px;
+      padding-bottom:10px;
+      color:white;
+    }
+  </style>
+</head>
+<body>
+<div id="myCarousel" class="carousel slide" data-ride="carousel">
+  <!-- Indicators -->
+  <ol id="carouselIndicators" class="carousel-indicators"></ol>
+  <!-- Wrapper for slides -->
+  <div id="carouselInner" class="carousel-inner" role="listbox"></div>
+  <!-- Left and right controls -->
+  <p><a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev"> <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> <span class="sr-only">Previous</span> </a> <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next"> <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span> <span class="sr-only">Next</span> </a></p>
+</div>
+<script>
+
+const orgUnitId = getQueryStringParams('ou');
+const moduleId = getQueryStringParams('moduleId');
+
+const TOPIC_TYPE = 1;
+const moduleAPI = `/d2l/api/le/1.25/${orgUnitId}/content/modules/${moduleId}/structure/`;
+
+const backgroundColours = ['green', 'blue', 'purple', 'orange'];
+
+function getQueryStringParams(sParam) {
+  const sPageURL = window.location.search.substring(1);
+  const sURLVariables = sPageURL.split('&');
+  for (let i = 0; i < sURLVariables.length; i++) {
+    const sParameterName = sURLVariables[i].split('=');
+    if (sParameterName[0] == sParam) {
+      return sParameterName[1];
+    }
+  }
+}
+
+function resizeParentIframe() {
+  if( window.parent && window.parent.document ) {
+    const iframes = parent.document.getElementsByTagName('iframe');
+    for( let i=0; i<iframes.length; i++ ) {
+        if( iframes[i].contentWindow === window ) {
+            iframes[i].style.height = document.body.scrollHeight + 'px';
+        }
+    }
+  }
+}
+
+function makeApiCall(method, api, apiSuccess, apiError) {
+  $.ajax(api, {
+    method: method,
+    xhrFields: {withCredentials: true},
+    success: apiSuccess,
+    error: apiError
+  });
+}
+
+function apiError(err) {
+  console.log(err);
+}
+
+function apiSuccess(res) {
+  
+  let obj, topicCounter, title, textDescription, htmlDescription, topicId, topicUrl, colour, slide, indicator, activeClass;
+  
+  activeClass = "active";
+  topicCounter = 0;
+  for( let i = 0; i < res.length; i++ ) {
+    obj = res[i];
+    if( obj.Type !== TOPIC_TYPE ) {
+      continue;
+    }
+
+    topicId = obj.Id;
+    title = obj.Title;
+    textDescription = obj.Description.Text;
+    htmlDescription = obj.Description.Html;
+    colour = backgroundColours[topicCounter % backgroundColours.length];
+    topicUrl = `/d2l/le/content/${orgUnitId}/viewContent/${topicId}/View`;
+
+    indicator = `<li data-target="#myCarousel" data-slide-to="${(topicCounter + 1)}" class="${activeClass}" ></li>`;
+    slide = `
+      <div class="item ${colour} ${activeClass}">
+        <div class="pane center-block">
+          <h2>${title}</h2>
+          <p>${textDescription}</p>
+          <a class="btn btn-default" href="${topicUrl}" target="_parent">Learn More</a></div>
+        </div>
+      </div>
+    `;
+
+    $('#carouselInner').append(slide);
+    $('#carouselIndicators').append(indicator);
+
+    activeClass = "";
+    topicCounter++;
+  }
+
+  resizeParentIframe();
+}
+
+//start the whole thing going
+makeApiCall('GET', moduleAPI, apiSuccess, apiError);
+</script>
+</body>
+</html>
