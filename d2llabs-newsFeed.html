@@ -141,7 +141,7 @@ function apiSuccess(res) {
 
     firstImgSrc = extractFirstImage( htmlBody );
     if( firstImgSrc ) {
-        imgHtml = `<span><img src="${firstImageSource}"  class="project-pic img-thumbnail"></span>`;
+        imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
         divClass = 'withPicture';
     } else {
         imgHtml = '';

@@ -73,6 +73,11 @@ function resizeParentIframe() {
   }
 }
 
+$.fn.matchHeight._afterUpdate = function(event, groups) {
+    // do something after all updates are applied
+    resizeParentIframe();
+}
+
 function makeApiCall(method, api, apiSuccess, apiError) {
   $.ajax(api, {
     method: method,
@@ -140,10 +145,8 @@ function apiSuccess(res) {
     }
   }
 
-  $('.project-pic').matchHeight();
-  $('.box').matchHeight();
-
-  window.setTimeout(1000, resizeParentIframe());
+  $('.project-pic').matchHeight(true);
+  $('.box').matchHeight(true);
 }
 
 //start the whole thing going
