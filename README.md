@@ -27,5 +27,5 @@ This widget displays a simple feed-style view of announcements for a given org u
 This widget reads the titles and descriptions for the topics in a given content module and displays the as a grid that is 3 columns wide. Uses the `/d2l/api/le/1.25/${orgUnitId}/content/modules/${moduleId}/structure/` API method. Looks for the first image in the topic description and uses that as part of the display for that topic.
 
 - **Query String Parameters**
- -- **ou** - integer value of the org unit where the content exists, use {orgUnitId} for current org unit
- -- **moduleId** - integer value of the parent content module containing the topics to display
+  - **ou** - integer value of the org unit where the content exists, use {orgUnitId} for current org unit
+  - **moduleId** - integer value of the parent content module containing the topics to display
