@@ -25,6 +25,11 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
     d2llabs-projectList {
       width: 100%;
     }
+
+    #footer-links {
+      width:100%;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -33,6 +38,10 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
 <div class="container" id="d2llabs-projectList">
   <div id="d2llabs-banners"></div>
 </div>
+
+<div id="footer-links">
+</div>
+
 <script>
 
 const orgUnitId = getQueryStringParams('ou');
@@ -44,6 +53,9 @@ const DEFAULT_IMG = "/d2l/tools/img/pixel_lightgray.gif";
 
 const TOPIC_TYPE = 1;
 const moduleAPI = `/d2l/api/le/1.25/${orgUnitId}/content/modules/${moduleId}/structure/`;
+const moduleUrl = `/d2l/le/content/${orgUnitId}/Home?itemIdentifier=D2L.LE.Content.ContentObject.ModuleCO-${moduleId}`;
+
+const linkView = {Text: 'view module', Url: moduleUrl};
 
 function extractFirstImage(html) {
   const htmlObject = document.createElement('div');
@@ -83,6 +95,19 @@ $.fn.matchHeight._afterUpdate = function(event, groups) {
     resizeParentIframe();
 }
 
+function displayFooterLinks( arrLinks ) {
+  let linkObj, linksHtml = "";
+  for( let i=0; i<arrLinks.length; i++ ) {
+    linkObj = arrLinks[i];
+    if( i ) {
+      linksHtml += " | ";
+    }
+    linksHtml += `<a href="${linkObj.Url}" target="_top">${linkObj.Text}</a>`;
+  }
+  $('#footer-links').append(linksHtml);
+  resizeParentIframe();
+}
+
 function makeApiCall(method, api, apiSuccess, apiError) {
   $.ajax(api, {
     method: method,
@@ -101,7 +126,9 @@ function apiSuccess(res) {
   let columnIter = 0;
  
   let obj, topicId, title, topicUrl, textDescription, htmlDescription, imgSrc;
-  let rowObj, colObj, bannerObj;
+  let rowObj, colObj, bannerObj, bannerType, bannerTypeFinder;
+
+  const bannerTypes = ['success', 'info', 'warning', 'danger']; //based on Bootstrap alerts
 
   for (var i = 0; i < res.length; i++) {
     obj = res[i];
@@ -116,8 +143,16 @@ function apiSuccess(res) {
     topicUrl = `/d2l/le/content/${orgUnitId}/viewContent/${topicId}/View`;
 
     if( title.startsWith("#") ) {
+      bannerType = "info";
+      if( title.indexOf(':') > 0 ) {
+        bannerTypeFinder = title.substr(1, title.indexOf(':')-1).toLowerCase();
+        if(bannerTypes.indexOf(bannerTypeFinder) > 0) {
+          bannerType = bannerTypeFinder;
+        }
+      }
+      
       bannerObj = `
-        <div class="alert alert-info" role="alert">
+        <div class="alert alert-${bannerType}" role="alert">
           ${textDescription} Find out more <a href="${topicUrl}" target="_parent">here</a>
         </div>
       `;
@@ -152,6 +187,8 @@ function apiSuccess(res) {
 
   $('.project-pic').matchHeight(true);
   $('.box').matchHeight(true);
+
+  displayFooterLinks( [linkView] );
 }
 
 //start the whole thing going

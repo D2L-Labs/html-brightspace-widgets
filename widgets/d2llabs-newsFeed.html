@@ -71,6 +71,11 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
     .summary {
       padding-top: 10px;
     }
+
+    #footer-links {
+      width:100%;
+      text-align: center;
+    }
   </style>
 
 </head>
@@ -79,6 +84,9 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
 <ul id="d2llabs-newsFeed">
 </ul>
 
+<div id="footer-links">
+</div>
+
 <script>
 
 const orgUnitId = getQueryStringParams('ou');
@@ -86,6 +94,9 @@ const announcementLimit = getQueryStringParams('limit') || 5;
 const sinceDays = parseInt( getQueryStringParams('sinceDays') || 365 );
 const summaryLimit = parseInt( getQueryStringParams('summaryLimit') || 100 );
 const showTags = ( parseInt( getQueryStringParams('showTags') || 1 ) ) ? true : false;
+
+const linkView = {Text: 'view announcments', Url: `/d2l/lms/news/main.d2l?ou=${orgUnitId}`};
+const linkNew = {Text: 'new', Url: `/d2l/lms/news/newedit.d2l?ou=${orgUnitId}&global=0`};
 
 const showSummary = ( summaryLimit ) ? true : false;
 
@@ -221,11 +232,33 @@ function apiSuccess(res) {
     $('#d2llabs-newsFeed').append(announcement);
   }
 
+  displayFooterLinks( [linkView] );
   resizeParentIframe();
+}
+
+function displayFooterLinks( arrLinks ) {
+  let linkObj, linksHtml = "";
+  for( let i=0; i<arrLinks.length; i++ ) {
+    linkObj = arrLinks[i];
+    if( i ) {
+      linksHtml += " | ";
+    }
+    linksHtml += `<a href="${linkObj.Url}" target="_top">${linkObj.Text}</a>`;
+  }
+  $('#footer-links').append(linksHtml);
+  resizeParentIframe();
+}
+
+function linkError(err) {
+  displayFooterLinks( [linkView] );
+}
+function linkSuccess(res) {
+  displayFooterLinks( [linkView, linkNew] );
 }
 
 //start the whole thing going
 makeApiCall('GET', newsApi, apiSuccess, apiError);
+//makeApiCall('OPTION', linkNew.Url, linkSuccess, linkError);
 
 </script>
 </body>
