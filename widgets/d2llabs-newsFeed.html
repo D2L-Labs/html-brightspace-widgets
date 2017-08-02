@@ -1,3 +1,8 @@
+<!--
+The code for this file can be found here: https://github.com/D2L-Labs/html-brightspace-widgets
+
+Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org/licenses/
+//-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +31,7 @@
       list-style: none;
     }
 
-    .postedDate {
+    .supplemental {
       font-size: 14px;
       line-height: 20px; 
       font-weight: 400; /* normal */
@@ -50,6 +55,22 @@
       width:80px;
       float:left!important
     }
+
+    .tagList {
+      width: 100%;
+      list-style: none;
+      padding:0px;
+    }
+
+    .tag {
+      display: inline;
+      font-weight:700; /* bold */
+      padding-right:7px;
+    }
+
+    .summary {
+      padding-top: 10px;
+    }
   </style>
 
 </head>
@@ -62,8 +83,16 @@
 
 const orgUnitId = getQueryStringParams('ou');
 const announcementLimit = getQueryStringParams('limit') || 5;
+const sinceDays = parseInt( getQueryStringParams('sinceDays') || 365 );
+const summaryLimit = parseInt( getQueryStringParams('summaryLimit') || 100 );
+const showTags = ( parseInt( getQueryStringParams('showTags') || 1 ) ) ? true : false;
 
-const newsApi = `/d2l/api/le/1.25/${orgUnitId}/news/`;
+const showSummary = ( summaryLimit ) ? true : false;
+
+const dt = new Date();
+dt.setDate( dt.getDate() - sinceDays );
+const sinceParam = dt.toISOString();
+const newsApi = `/d2l/api/le/1.25/${orgUnitId}/news/?since=${sinceParam}`;
 
 function extractFirstImage(html) {
   const htmlObject = document.createElement('div');
@@ -113,7 +142,14 @@ function apiError(err) {
 
 function apiSuccess(res) {
 
-  let obj, newsId, title, displayTitle, url, newsDate, displayDate, htmlBody, firstImgSrc, imgHtml, divClass, borderClass, announcement;
+  const tagRegExp = /#[^#\ ]/gi;
+
+  let obj, newsId, title, displayTitle, url,
+    newsDate, displayDate, 
+    htmlBody, textBody, displayText, tags, displayTags,
+    firstImgSrc, imgHtml, 
+    divClass, borderClass, announcement;
+  
   let lastIndexToShow = announcementLimit-1;
   if( res.length < (lastIndexToShow+1) ) {
     lastIndexToShow = res.length - 1;
@@ -134,6 +170,28 @@ function apiSuccess(res) {
     title = obj.Title;
     newsDate = new Date(obj.StartDate);
     htmlBody = obj.Body.Html;
+    textBody = obj.Body.Text;
+    
+    if( showSummary ) {
+      displayText = textBody.substr(0, summaryLimit);
+      if( textBody.length > summaryLimit ) {
+        displayText += '...';
+      }
+      displayText = `<div class="summary">${displayText}</div>`;
+    } else {
+      displayText = '';
+    }
+
+    displayTags = "";
+    if( showTags ) {
+      tags = textBody.match(/#\w*/gi);
+      if( tags ) {
+        for( let i=0; i<tags.length; i++ ) {
+          displayTags += `<li class="supplemental tag">${tags[i]}</li>`;
+        }
+        displayTags = `<ul class="tagList">${displayTags}</ul>`;
+      }
+    }
 
     url = `/d2l/le/news/${orgUnitId}/${newsId}/view`;
     displayTitle = `<a href="${url}" target="_top">${title}</a>`;
@@ -141,19 +199,21 @@ function apiSuccess(res) {
 
     firstImgSrc = extractFirstImage( htmlBody );
     if( firstImgSrc ) {
-        imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
-        divClass = 'withPicture';
+      imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
+      divClass = 'withPicture';
     } else {
-        imgHtml = '';
-        divClass = '';
+      imgHtml = '';
+      divClass = '';
     }
 
     announcement = `
       <li class="newsObject ${borderClass}">
         ${imgHtml}
         <div class="${divClass}">
-          <h3>${displayTitle}</h3>
-          <p class="postedDate">Posted: ${displayDate}</p>
+          <h4>${displayTitle}</h4>
+          ${displayTags}
+          <div class="supplemental">Posted: ${displayDate}</div>
+          ${displayText}
         </div>
       </li>
     `;
