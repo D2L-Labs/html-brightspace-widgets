@@ -30,6 +30,10 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
       width:100%;
       text-align: center;
     }
+
+    .project-pic {
+      min-height:100px;
+    }
   </style>
 </head>
 <body>
@@ -56,6 +60,8 @@ const moduleAPI = `/d2l/api/le/1.25/${orgUnitId}/content/modules/${moduleId}/str
 const moduleUrl = `/d2l/le/content/${orgUnitId}/Home?itemIdentifier=D2L.LE.Content.ContentObject.ModuleCO-${moduleId}`;
 
 const linkView = {Text: 'view module', Url: moduleUrl};
+
+let numProjects = 0, countProjects = 0;
 
 function extractFirstImage(html) {
   const htmlObject = document.createElement('div');
@@ -91,7 +97,6 @@ function resizeParentIframe() {
 }
 
 $.fn.matchHeight._afterUpdate = function(event, groups) {
-    // do something after all updates are applied
     resizeParentIframe();
 }
 
@@ -106,6 +111,16 @@ function displayFooterLinks( arrLinks ) {
   }
   $('#footer-links').append(linksHtml);
   resizeParentIframe();
+}
+
+function imageLoaded() {
+  if(numProjects) {
+    countProjects++;
+    if(countProjects >= numProjects) {
+      $('.project-pic').matchHeight(true);
+      $('.box').matchHeight(true);
+    }
+  }
 }
 
 function makeApiCall(method, api, apiSuccess, apiError) {
@@ -158,6 +173,8 @@ function apiSuccess(res) {
       `;
       $('#d2llabs-banners').append(bannerObj);
     } else {
+      numProjects++;
+
       imgSrc = extractFirstImage(htmlDescription)
       if( !imgSrc ) { imgSrc = DEFAULT_IMG; } 
 
@@ -170,7 +187,7 @@ function apiSuccess(res) {
       colObj = `
         <div class="col-xs-4">
           <div class="thumbnail box">
-            <img src="${imgSrc}" class="project-pic" />
+            <img src="${imgSrc}" class="project-pic" onload="imageLoaded()" />
             <div class="caption">
               <h4>${title}</h4>
               <p>${textDescription}</p>
@@ -184,9 +201,6 @@ function apiSuccess(res) {
       columnIter = (columnIter + 1) % NUM_COLUMNS;
     }
   }
-
-  $('.project-pic').matchHeight(true);
-  $('.box').matchHeight(true);
 
   displayFooterLinks( [linkView] );
 }
