@@ -53,7 +53,7 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
 
     .project-pic {
       width:80px;
-      float:left!important
+      float:left!important;
     }
 
     .tagList {
@@ -70,6 +70,10 @@ Licensed under: Apache License, Version 2.0, January 2004, http://www.apache.org
 
     .summary {
       padding-top: 10px;
+    }
+
+    .spacer {
+      padding-top: 5px;
     }
 
     #footer-links {
@@ -159,7 +163,7 @@ function apiSuccess(res) {
     newsDate, displayDate, 
     htmlBody, textBody, displayText, tags, displayTags,
     firstImgSrc, imgHtml, 
-    divClass, borderClass, announcement;
+    divClass, spacerClass, borderClass, announcement;
   
   let lastIndexToShow = announcementLimit-1;
   if( res.length < (lastIndexToShow+1) ) {
@@ -212,16 +216,22 @@ function apiSuccess(res) {
     if( firstImgSrc ) {
       imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
       divClass = 'withPicture';
+      spacerClass = 'spacer'
     } else {
       imgHtml = '';
       divClass = '';
+      spacerClass = '';
     }
 
     announcement = `
       <li class="newsObject ${borderClass}">
-        ${imgHtml}
-        <div class="${divClass}">
-          <h4>${displayTitle}</h4>
+        <div>
+          ${imgHtml}
+          <div class="${divClass}">
+            <h4>${displayTitle}</h4>
+          </div>
+        </div>
+        <div class="${spacerClass}">
           ${displayTags}
           <div class="supplemental">Posted: ${displayDate}</div>
           ${displayText}
