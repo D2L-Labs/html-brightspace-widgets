@@ -20,8 +20,10 @@ This widget displays a simple feed-style view of announcements for a given org u
   - **ou** - integer value of the org unit where the content exists, use {orgUnitId} for current org unit.
   - **limit** - (optional) integer value for the number of announcements to display. Defaults to 5.
   - **sinceDays** - (optional) integer value of days to which to limit announcments. Defaults to 365.
-  - **summaryLimit** - (optional) integer number of characters to show of announcement text as a summary. Defaults to 100.
+  - **summaryLimit** - (optional) integer number of characters to show of announcement content text as a summary. Defaults to 100. A value of 0 hides all body content. A value of -1 displays the HTML content of the announcement in its entirety.
   - **showTags** - (optional) binary flag to determine if tags should be display (set to 0 to disable). Defaults to 1 (tags shown)
+  - **tag** - (optional) specify a tag (do not include the #) to filter to only those announcements with that tag
+  - **sl** - (optional) specify whether to show links - a value of 0 means that announcment titles are not linked to the announcements, and the link to the main announcements page also is not displayed
 
 ### d2llabs-projectList.html
 This widget reads the titles and descriptions for the topics in a given content module and displays the as a grid that is 3 columns wide. Uses the `/d2l/api/le/1.25/${orgUnitId}/content/modules/${moduleId}/structure/` API method. Looks for the first image in the topic description and uses that as part of the display for that topic.
