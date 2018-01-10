@@ -94,6 +94,8 @@ const announcementLimit = getQueryStringParams('limit') || 5;
 const sinceDays = parseInt( getQueryStringParams('sinceDays') || 365 );
 const summaryLimit = parseInt( getQueryStringParams('summaryLimit') || 100 );
 const showTags = ( parseInt( getQueryStringParams('showTags') || 1 ) ) ? true : false;
+const showLinks = ( parseInt( getQueryStringParams('sl') || 1 ) ) ? true : false;
+const tagFilter = getQueryStringParams('tag') || '';
 
 const linkView = {Text: 'view announcments', Url: `/d2l/lms/news/main.d2l?ou=${orgUnitId}`};
 const linkNew = {Text: 'new', Url: `/d2l/lms/news/newedit.d2l?ou=${orgUnitId}&global=0`};
@@ -157,7 +159,7 @@ function apiSuccess(res) {
 
   let obj, newsId, title, displayTitle, url,
     newsDate, displayDate, 
-    htmlBody, textBody, displayText, tags, displayTags,
+    htmlBody, textBody, displayText, tags, displayTags, tagFound,
     firstImgSrc, imgHtml, 
     divClass, borderClass, announcement;
   
@@ -168,25 +170,51 @@ function apiSuccess(res) {
 
   borderClass = "bottomBorder";
 
+  let n = -1; //index of displayed news articles
   for (let i=0; i<res.length; i++) {
     obj = res[i];
-
-    if( i > lastIndexToShow ) { 
-        break; 
-    } else if( i === lastIndexToShow ) {
-        borderClass = "";
-    }
 
     newsId = obj.Id;
     title = obj.Title;
     newsDate = new Date(obj.StartDate);
     htmlBody = obj.Body.Html;
     textBody = obj.Body.Text;
+
+    if( tagFilter.length > 0 || showTags ) {
+      tags = textBody.match(/#\w*/gi);
+    }
+
+    if( tagFilter.length > 0 ) {
+      tagFound = false;
+      for( let j=0; j<tags.length; j++ ) {
+
+        if( tags[j] == `#${tagFilter}` ) {
+          tagFound = true;
+          break;
+        }
+      }
+      
+      if( !tagFound ) {
+        continue;
+      }
+    }
+
+    n++;
+
+    if( n > lastIndexToShow ) { 
+        break; 
+    } else if( n === lastIndexToShow ) {
+        borderClass = "";
+    }
     
     if( showSummary ) {
-      displayText = textBody.substr(0, summaryLimit);
-      if( textBody.length > summaryLimit ) {
-        displayText += '...';
+      if( summaryLimit > 0 ) {
+        displayText = textBody.substr(0, summaryLimit);
+        if( textBody.length > summaryLimit ) {
+          displayText += '...';
+        }
+      } else {
+        displayText = htmlBody;
       }
       displayText = `<div class="summary">${displayText}</div>`;
     } else {
@@ -195,26 +223,31 @@ function apiSuccess(res) {
 
     displayTags = "";
     if( showTags ) {
-      tags = textBody.match(/#\w*/gi);
+      
       if( tags ) {
-        for( let i=0; i<tags.length; i++ ) {
-          displayTags += `<li class="supplemental tag">${tags[i]}</li>`;
+        for( let j=0; j<tags.length; j++ ) {
+          displayTags += `<li class="supplemental tag">${tags[j]}</li>`;
         }
         displayTags = `<ul class="tagList">${displayTags}</ul>`;
       }
     }
 
     url = `/d2l/le/news/${orgUnitId}/${newsId}/view`;
-    displayTitle = `<a href="${url}" target="_top">${title}</a>`;
+    if( showLinks ) {
+      displayTitle = `<a href="${url}" target="_top">${title}</a>`;
+    } else {
+      displayTitle = title;
+    }
     displayDate = moment(newsDate).fromNow();
 
-    firstImgSrc = extractFirstImage( htmlBody );
-    if( firstImgSrc ) {
-      imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
-      divClass = 'withPicture';
-    } else {
-      imgHtml = '';
-      divClass = '';
+    imgHtml = '';
+    divClass = '';
+    if( summaryLimit > 0 ) {
+      firstImgSrc = extractFirstImage( htmlBody );
+      if( firstImgSrc ) {
+        imgHtml = `<span><img src="${firstImgSrc}"  class="project-pic img-thumbnail"></span>`;
+        divClass = 'withPicture';
+      }
     }
 
     announcement = `
@@ -232,7 +265,9 @@ function apiSuccess(res) {
     $('#d2llabs-newsFeed').append(announcement);
   }
 
-  displayFooterLinks( [linkView] );
+  if( showLinks ) {
+    displayFooterLinks( [linkView] );
+  }
   resizeParentIframe();
 }
 
