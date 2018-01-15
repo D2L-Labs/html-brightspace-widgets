@@ -184,8 +184,9 @@ function apiSuccess(res) {
       tags = textBody.match(/#\w*/gi);
     }
 
-    if( tagFilter.length > 0 ) {
+    if( tagFilter.length > 0 && tags ) {
       tagFound = false;
+
       for( let j=0; j<tags.length; j++ ) {
 
         if( tags[j] == `#${tagFilter}` ) {
