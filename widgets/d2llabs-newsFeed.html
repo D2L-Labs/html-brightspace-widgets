@@ -134,7 +134,7 @@ function resizeParentIframe() {
     const iframes = parent.document.getElementsByTagName('iframe');
     for( let i=0; i<iframes.length; i++ ) {
         if( iframes[i].contentWindow === window ) {
-            iframes[i].style.height = document.body.scrollHeight + 'px';
+            iframes[i].style.height = (document.body.scrollHeight + 20) + 'px';
         }
     }
   }
@@ -184,14 +184,16 @@ function apiSuccess(res) {
       tags = textBody.match(/#\w*/gi);
     }
 
-    if( tagFilter.length > 0 && tags ) {
+    if( tagFilter.length > 0 ) {
       tagFound = false;
 
-      for( let j=0; j<tags.length; j++ ) {
+      if( tags ) {
+        for( let j=0; j<tags.length; j++ ) {
 
-        if( tags[j] == `#${tagFilter}` ) {
-          tagFound = true;
-          break;
+          if( tags[j] == `#${tagFilter}` ) {
+            tagFound = true;
+            break;
+          }
         }
       }
       
